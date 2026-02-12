@@ -1,0 +1,77 @@
+name: Build
+
+on:
+  push:
+    branches: [x64]
+  pull_request:
+    branches: [x64]
+
+jobs:
+  build-linux-x64:
+    runs-on: ubuntu-latest
+    container: ubuntu:20.04
+
+    env:
+      DEPS: ${{ github.workspace }}/deps
+
+    steps:
+      - name: Install packages
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends git clang python3 python3-pip
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install AMBuild
+        run: pip3 install git+https://github.com/alliedmodders/ambuild
+
+      - name: Clone dependencies
+        run: |
+          mkdir -p "$DEPS"
+          git clone --depth 1 https://github.com/alliedmodders/hl2sdk-manifests hl2sdk-manifests
+          git clone --depth 1 --branch tf2 https://github.com/alliedmodders/hl2sdk "$DEPS/hl2sdk-tf2"
+          git clone --depth 1 --recursive https://github.com/alliedmodders/sourcemod "$DEPS/sourcemod"
+          git clone --depth 1 https://github.com/alliedmodders/metamod-source "$DEPS/metamod-source"
+
+      - name: Configure
+        run: |
+          mkdir build
+          cd build
+          CC=clang CXX=clang++ python3 ../configure.py \
+            --enable-optimize \
+            --sm-path="$DEPS/sourcemod" \
+            --mms-path="$DEPS/metamod-source" \
+            --hl2sdk-root="$DEPS"
+
+      - name: Build
+        working-directory: build
+        run: ambuild
+
+      - name: Package artifact
+        run: |
+          mkdir -p artifact/addons/sourcemod/extensions
+          mkdir -p artifact/addons/sourcemod/gamedata
+          mkdir -p artifact/addons/sourcemod/configs
+          mkdir -p artifact/addons/sourcemod/scripting/include
+
+          so_file=$(find build -name 'tf2items.ext.2.tf2.so' -type f)
+          if [ -z "$so_file" ]; then
+            echo "ERROR: Could not find tf2items.ext.2.tf2.so"
+            find build -name '*.so' -type f
+            exit 1
+          fi
+
+          cp "$so_file" artifact/addons/sourcemod/extensions/
+          cp tf2items.autoload artifact/addons/sourcemod/extensions/
+          cp tf2.items.txt artifact/addons/sourcemod/gamedata/
+          cp tf2items.weapons.example.txt artifact/addons/sourcemod/configs/
+          cp pawn/tf2items.inc artifact/addons/sourcemod/scripting/include/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tf2items-linux-x64
+          path: artifact/
