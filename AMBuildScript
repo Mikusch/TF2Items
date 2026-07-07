@@ -138,7 +138,6 @@ class Config(object):
       '-fvisibility-inlines-hidden',
       '-Wall',
       '-Werror',
-      '-Wno-unused-but-set-variable',
       '-msse'
     ]
 
