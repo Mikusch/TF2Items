@@ -2,13 +2,14 @@ name: Build
 
 on:
   push:
-    branches: [x64]
+    branches: [master]
+    tags: ['*']
   pull_request:
-    branches: [x64]
+    branches: [master]
 
 jobs:
   build-linux:
-    name: build-linux-x64
+    name: build-linux
     runs-on: ubuntu-latest
     container: ghcr.io/alliedmodders/build-containers/debian11-clang22:latest
 
@@ -24,8 +25,8 @@ jobs:
           mkdir -p "$DEPS"
           git clone --depth 1 https://github.com/alliedmodders/hl2sdk-manifests hl2sdk-manifests
           git clone --depth 1 --branch tf2 https://github.com/alliedmodders/hl2sdk "$DEPS/hl2sdk-tf2"
-          git clone --depth 1 --recursive https://github.com/alliedmodders/sourcemod "$DEPS/sourcemod"
-          git clone --depth 1 https://github.com/alliedmodders/metamod-source "$DEPS/metamod-source"
+          git clone --depth 1 --recursive --branch k/sourcehook_alternative https://github.com/alliedmodders/sourcemod "$DEPS/sourcemod"
+          git clone --depth 1 --recursive --branch k/sourcehook_alternative https://github.com/alliedmodders/metamod-source "$DEPS/metamod-source"
 
       - name: Configure
         run: |
@@ -33,7 +34,7 @@ jobs:
           cd build
           python3 ../configure.py \
             --enable-optimize \
-            --targets=x86_64 \
+            --targets=x86,x86_64 \
             --sm-path="$DEPS/sourcemod" \
             --mms-path="$DEPS/metamod-source" \
             --hl2sdk-root="$DEPS"
@@ -42,34 +43,15 @@ jobs:
         working-directory: build
         run: ambuild
 
-      - name: Package artifact
-        run: |
-          mkdir -p artifact/addons/sourcemod/extensions
-          mkdir -p artifact/addons/sourcemod/gamedata
-          mkdir -p artifact/addons/sourcemod/configs
-          mkdir -p artifact/addons/sourcemod/scripting/include
-
-          so_file=$(find build -name 'tf2items.ext.2.tf2.so' -type f)
-          if [ -z "$so_file" ]; then
-            echo "ERROR: Could not find tf2items.ext.2.tf2.so"
-            find build -name '*.so' -type f
-            exit 1
-          fi
-
-          cp "$so_file" artifact/addons/sourcemod/extensions/
-          cp tf2items.autoload artifact/addons/sourcemod/extensions/
-          cp tf2.items.txt artifact/addons/sourcemod/gamedata/
-          cp tf2items.weapons.example.txt artifact/addons/sourcemod/configs/
-          cp pawn/tf2items.inc artifact/addons/sourcemod/scripting/include/
-
-      - name: Upload artifact
+      - name: Upload package
         uses: actions/upload-artifact@v7
         with:
-          name: tf2items-linux-x64
-          path: artifact/
+          name: tf2items-linux
+          path: build/package/
+          if-no-files-found: error
 
   build-windows:
-    name: build-windows-x64
+    name: build-windows
     runs-on: windows-latest
 
     env:
@@ -95,8 +77,8 @@ jobs:
           mkdir -p "$DEPS"
           git clone --depth 1 https://github.com/alliedmodders/hl2sdk-manifests hl2sdk-manifests
           git clone --depth 1 --branch tf2 https://github.com/alliedmodders/hl2sdk "$DEPS/hl2sdk-tf2"
-          git clone --depth 1 --recursive https://github.com/alliedmodders/sourcemod "$DEPS/sourcemod"
-          git clone --depth 1 https://github.com/alliedmodders/metamod-source "$DEPS/metamod-source"
+          git clone --depth 1 --recursive --branch k/sourcehook_alternative https://github.com/alliedmodders/sourcemod "$DEPS/sourcemod"
+          git clone --depth 1 --recursive --branch k/sourcehook_alternative https://github.com/alliedmodders/metamod-source "$DEPS/metamod-source"
 
       - name: Configure
         shell: bash
@@ -105,7 +87,7 @@ jobs:
           cd build
           python ../configure.py \
             --enable-optimize \
-            --targets=x86_64 \
+            --targets=x86,x86_64 \
             --sm-path="$DEPS/sourcemod" \
             --mms-path="$DEPS/metamod-source" \
             --hl2sdk-root="$DEPS"
@@ -114,29 +96,40 @@ jobs:
         working-directory: build
         run: ambuild
 
-      - name: Package artifact
-        shell: bash
-        run: |
-          mkdir -p artifact/addons/sourcemod/extensions
-          mkdir -p artifact/addons/sourcemod/gamedata
-          mkdir -p artifact/addons/sourcemod/configs
-          mkdir -p artifact/addons/sourcemod/scripting/include
-
-          dll_file=$(find build -name 'tf2items.ext.2.tf2.dll' -type f)
-          if [ -z "$dll_file" ]; then
-            echo "ERROR: Could not find tf2items.ext.2.tf2.dll"
-            find build -name '*.dll' -type f
-            exit 1
-          fi
-
-          cp "$dll_file" artifact/addons/sourcemod/extensions/
-          cp tf2items.autoload artifact/addons/sourcemod/extensions/
-          cp tf2.items.txt artifact/addons/sourcemod/gamedata/
-          cp tf2items.weapons.example.txt artifact/addons/sourcemod/configs/
-          cp pawn/tf2items.inc artifact/addons/sourcemod/scripting/include/
-
-      - name: Upload artifact
+      - name: Upload package
         uses: actions/upload-artifact@v7
         with:
-          name: tf2items-windows-x64
-          path: artifact/
+          name: tf2items-windows
+          path: build/package/
+          if-no-files-found: error
+
+  release:
+    name: release
+    needs: [build-linux, build-windows]
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download packages
+        uses: actions/download-artifact@v8
+        with:
+          pattern: tf2items-*
+          path: dist
+          merge-multiple: true
+
+      - name: Create archive
+        run: |
+          cd dist
+          zip -r "../tf2items-${GITHUB_REF_NAME}.zip" addons
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            "tf2items-${GITHUB_REF_NAME}.zip" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --title "${GITHUB_REF_NAME}" \
+            --generate-notes

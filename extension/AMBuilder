@@ -15,4 +15,4 @@ for cxx in Extension.targets:
   binary = Extension.ConfigureExtensionSDK(project, cxx, builder, sdk)
   binary.compiler.cxxincludes += [  os.path.join(builder.currentSourcePath, 'sdk') ]
 
-Extension.extension = builder.Add(project)
+Extension.binaries = builder.Add(project)
