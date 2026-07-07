@@ -204,7 +204,7 @@ class Config(object):
 
     binary.compiler.cxxincludes += [
       os.path.join(self.mms_root, 'core'),
-      os.path.join(self.mms_root, 'core', 'sourcehook'),
+      os.path.join(self.mms_root, 'third_party', 'khook', 'include'),
     ]
 
   def ConfigureLibrary(self, project, name, compiler, context):
