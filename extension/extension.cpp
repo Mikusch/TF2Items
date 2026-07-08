@@ -354,7 +354,7 @@ KHook::Return<void> Hook_ClientPutInServer(IServerGameClients *pServerGameClient
 		{
 			if (!g_bHookedBot)
 			{
-				g_GiveNamedItemHook.Add(baseentity);
+				g_GiveNamedItemHook.AddGlobal(baseentity);
 				g_bHookedBot = true;
 #ifdef TF2ITEMS_DEBUG_HOOKING
 				g_pSM->LogMessage(myself, "GiveNamedItem hooked (bot).");
@@ -363,7 +363,7 @@ KHook::Return<void> Hook_ClientPutInServer(IServerGameClients *pServerGameClient
 		} else {
 			if (!g_bHookedPlayer)
 			{
-				g_GiveNamedItemHook.Add(baseentity);
+				g_GiveNamedItemHook.AddGlobal(baseentity);
 				g_bHookedPlayer = true;
 #ifdef TF2ITEMS_DEBUG_HOOKING
 				g_pSM->LogMessage(myself, "GiveNamedItem hooked (player).");
@@ -445,7 +445,7 @@ bool TF2Items::SDK_OnLoad(char *error, size_t maxlen, bool late) {
 			}
 
 			// Done, hook the BasePlayer
-			g_GiveNamedItemHook.Add((CBaseEntity *)pBasePlayer);
+			g_GiveNamedItemHook.AddGlobal((CBaseEntity *)pBasePlayer);
 			g_bHookedPlayer = true;
 
 #ifdef TF2ITEMS_DEBUG_HOOKING
@@ -528,6 +528,7 @@ bool TF2Items::SDK_OnMetamodUnload(char *error, size_t maxlen)
 	}
 
 	g_GiveNamedItemHook.Configure(-1);
+	g_GiveNamedItemHook.ClearHooks();
 	g_bHookedPlayer = false;
 	g_bHookedBot = false;
 
