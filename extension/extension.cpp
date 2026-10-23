@@ -749,8 +749,6 @@ static cell_t TF2Items_GetClassname(IPluginContext *pContext, const cell_t *para
 		if (iSourceSize >= iDestinySize)
 		{
 			iSourceSize = iDestinySize-1;
-		} else {
-			iSourceSize = iDestinySize;
 		}
 	 
 		// Copy
