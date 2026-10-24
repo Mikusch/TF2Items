@@ -159,7 +159,11 @@ static_assert(sizeof(CEconItemView) == 208, "CEconItemView - incorrect size on t
 static_assert(sizeof(CEconItemHandle) == 32, "CEconItemHandle - incorrect size on this compiler");
 static_assert(sizeof(CAttributeList) == 48, "CAttributeList - incorrect size on this compiler");
 #else
+#ifdef _WIN32
+static_assert(sizeof(CEconItemView) == 152, "CEconItemView - incorrect size on this compiler");
+#else
 static_assert(sizeof(CEconItemView) == 148, "CEconItemView - incorrect size on this compiler");
+#endif
 static_assert(sizeof(CEconItemHandle) == 24, "CEconItemHandle - incorrect size on this compiler");
 static_assert(sizeof(CAttributeList) == 28, "CAttributeList - incorrect size on this compiler");
 #endif
