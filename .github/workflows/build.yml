@@ -2,10 +2,10 @@ name: Build
 
 on:
   push:
-    branches: [x64]
+    branches: [master, x64, khook]
     tags: ['*']
   pull_request:
-    branches: [x64]
+    branches: [master, x64, khook]
 
 jobs:
   build-linux:
