@@ -26,7 +26,7 @@ jobs:
           git clone --depth 1 https://github.com/alliedmodders/hl2sdk-manifests hl2sdk-manifests
           git clone --depth 1 --branch tf2 https://github.com/alliedmodders/hl2sdk "$DEPS/hl2sdk-tf2"
           git clone --depth 1 --recursive --branch k/sourcehook_alternative https://github.com/alliedmodders/sourcemod "$DEPS/sourcemod"
-          git clone --depth 1 --recursive --branch k/sourcehook_alternative https://github.com/alliedmodders/metamod-source "$DEPS/metamod-source"
+          git clone --depth 1 --recursive --branch master https://github.com/alliedmodders/metamod-source "$DEPS/metamod-source"
 
       - name: Configure
         run: |
@@ -78,7 +78,7 @@ jobs:
           git clone --depth 1 https://github.com/alliedmodders/hl2sdk-manifests hl2sdk-manifests
           git clone --depth 1 --branch tf2 https://github.com/alliedmodders/hl2sdk "$DEPS/hl2sdk-tf2"
           git clone --depth 1 --recursive --branch k/sourcehook_alternative https://github.com/alliedmodders/sourcemod "$DEPS/sourcemod"
-          git clone --depth 1 --recursive --branch k/sourcehook_alternative https://github.com/alliedmodders/metamod-source "$DEPS/metamod-source"
+          git clone --depth 1 --recursive --branch master https://github.com/alliedmodders/metamod-source "$DEPS/metamod-source"
 
       - name: Configure
         shell: bash
